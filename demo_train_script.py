@@ -7,7 +7,7 @@ config['N_spat'] = 8
 config['N_temp'] = 8
 config['N_bound'] = 8
 config['N_ic'] = 8
-config['MAX_EPOCH'] = 1000
+config['MAX_EPOCH'] = 5
 config['batch_size'] = 1000
 config['lr'] = 5e-5
 
@@ -29,5 +29,4 @@ for key, item in config.items():
     print(key, item)
 
 exp_name = 'test'
-model, hist = main.main(save=True, dest=exp_name,
-                        config_dict=config, load=False)
+model, hist = main.main(save=True, dest=exp_name, config_dict=config, load=False, show=True)

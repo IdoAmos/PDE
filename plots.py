@@ -34,7 +34,7 @@ def show_to_user(config_dict, epoch, model, device=torch.device('cpu'), hist_dic
             plt.show()
 
 
-def history_plot(hist, start=20, end=None, max=False, save=False, path='.', figname='history'):
+def history_plot(hist, start=20, end=None, max=False, save=False, path='.', figname='history', show: bool = False):
     if max:
         fig, axes = plt.subplots(3, 1)
         fig.set_size_inches([24, 14])
@@ -73,7 +73,9 @@ def history_plot(hist, start=20, end=None, max=False, save=False, path='.', fign
     plt.subplots_adjust()
     if save:
         fig.savefig(path + '/' + figname)
-    plt.draw()
+    if show:
+        plt.draw()
+    plt.close('all')
 
 
 def grad_dist_plot(model, epoch, save=False, path='', show=False):

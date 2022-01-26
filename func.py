@@ -174,9 +174,10 @@ def eval_res(model, t_max=1, x_min=-1, x_max=1, y_min=-1, y_max=1, N=200, sample
 
 def eval_metric(model, t_max: float, metric, x_min=-1, x_max=1, y_min=-1, y_max=1, N: int = 200, num_points: int = 10,
               sampler: str = 'uniform',
-              path: str = '.', camman: bool = True, save: bool = False):
+              path: str = '.', camman: bool = True, save: bool = False, show: bool =False):
     """
     Create a plot of SSIM values as a function of t from 0 to t_max
+    :param show:
     :param model: model generating images to evaluate
     :param t_max: max value of time
     :param N: image size (square images). (optional), default 200.

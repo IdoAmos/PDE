@@ -100,7 +100,7 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
         if epoch % 5 == 0:
             if epoch % 500 == 0:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
-                             show=show)
+                             show=False)
             else:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
                              show=False)
@@ -401,14 +401,17 @@ class scheduler_wrapper:
 
 
 def init_optimizer(config, model):
-    optim_config = config['optimizer']
+    optim_config = config['optimizer_config']
     type = optim_config['type']
     lr = optim_config['lr']
     l2_pen = optim_config['weight_decay']
     if type == 'Adam':
-        beta1 = optim_config['beta1']
-        beta2 = optim_config['beta2']
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=l2_pen)
+        if 'beta1' in optim_config.keys():
+            beta1 = optim_config['beta1']
+            beta2 = optim_config['beta2']
+            optimizer = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=l2_pen)
+        else:
+            optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=l2_pen)
 
     if type == 'lbfgs':
         optimizer = optim.LBFGS(params=model.parameters(), lr=lr)
