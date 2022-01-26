@@ -59,7 +59,7 @@ def make_exp_dir(path, exp_params):
     exp_num = 0
     if not os.path.exists(path):
         os.mkdir(path)
-    exp_dir = path + '/config0' + str(exp_num)
+    exp_dir = path + '/config' + str(exp_num)
     while os.path.exists(exp_dir):
         exp_num += 1
         exp_dir = path + '/config{}'.format(exp_num) + str(exp_num)
