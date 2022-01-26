@@ -15,10 +15,10 @@ config['model_name'] = 'Siren'
 config['num_layers'] = 2
 config['hidden_features'] = 256
 
-# config['C'].pop('fid_inf')
-# config['C'].pop('ic_inf')
-# config['P'].pop('fid_inf')
-# config['P'].pop('ic_inf')
+# config_BASELINE.yml['C'].pop('fid_inf')
+# config_BASELINE.yml['C'].pop('ic_inf')
+# config_BASELINE.yml['P'].pop('fid_inf')
+# config_BASELINE.yml['P'].pop('ic_inf')
 config['weight_decay'] = 1e-6
 config['sched_dict'] = dict(type='reduce_on_plat', patience=20, gamma=0.8, threshold=0.01)
 

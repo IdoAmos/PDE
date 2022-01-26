@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 import Data
+import func
 
 
 def show_to_user(config_dict, epoch, model, device=torch.device('cpu'), hist_dict=None, show=True):
@@ -120,7 +121,7 @@ def display_hyper_parameters(config_dict):
                                                                              config_dict['N_bound'],
                                                                              config_dict['N_temp'],
                                                                              config_dict['N_ic']))
-    print('\nTraining hyper parameters: lr={}, num epochs={}, schedule params={}, lambdas={}'.format(config_dict['lr'],
+    print('\nTraining hyper parameters: lr={}, num epochs={}, schedule params={}, lambdas={}'.format(config_dict['optimizer_config']['lr'],
                                                                                                      config_dict[
                                                                                                          'MAX_EPOCH'],
                                                                                                      config_dict[
@@ -128,3 +129,54 @@ def display_hyper_parameters(config_dict):
                                                                                                      config_dict['C']))
     print('\nModel hyper parameters: num layers={}, num hidden units={}'.format(config_dict['num_layers'],
                                                                                 config_dict['hidden_features']))
+
+
+def evaluate(config_dict, exp_dir, model, save, show):
+    func.eval_res(model=model,
+                  t_max=config_dict['t_max'],
+                  x_min=config_dict['x_min'],
+                  x_max=config_dict['x_max'],
+                  y_min=config_dict['y_min'],
+                  y_max=config_dict['y_max'],
+                  camman=config_dict['cam_man'],
+                  N=config_dict['N_ic'],
+                  mode='eval',
+                  save=save,
+                  path=exp_dir)
+    func.eval_res(model=model,
+                  t_max=config_dict['t_max'],
+                  x_min=config_dict['x_min'],
+                  x_max=config_dict['x_max'],
+                  y_min=config_dict['y_min'],
+                  y_max=config_dict['y_max'],
+                  camman=config_dict['cam_man'],
+                  N=config_dict['N_ic'],
+                  mode='gt',
+                  save=save,
+                  path=exp_dir)
+    func.eval_res(model=model,
+                  t_max=config_dict['t_max'],
+                  x_min=config_dict['x_min'],
+                  x_max=config_dict['x_max'],
+                  y_min=config_dict['y_min'],
+                  y_max=config_dict['y_max'],
+                  camman=config_dict['cam_man'],
+                  N=config_dict['N_ic'],
+                  mode='diff',
+                  save=save,
+                  path=exp_dir)
+    func.eval_metric(model=model, t_max=config_dict['t_max'], metric='ssim', x_min=config_dict['x_min'],
+                     x_max=config_dict['x_max'], y_min=config_dict['y_min'], y_max=config_dict['y_max'],
+                     N=config_dict['N_ic'], path=exp_dir, save=save, show=show)
+    func.eval_metric(model=model, t_max=config_dict['t_max'], metric='psnr', x_min=config_dict['x_min'],
+                     x_max=config_dict['x_max'], y_min=config_dict['y_min'], y_max=config_dict['y_max'],
+                     N=config_dict['N_ic'], path=exp_dir, save=save, show=show)
+
+
+def history_plots(config_dict, exp_dir, hist, save, show):
+    history_plot(hist, start=20, save=save, path=exp_dir, figname='mean_value_hist', show=show)
+    history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, save=save, path=exp_dir,
+                       figname='mean_value_hist_midway', show=show)
+    history_plot(hist, max=True, save=save, path=exp_dir, figname='max_value_hist', show=show)
+    history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, max=True, save=save, path=exp_dir,
+                       figname='max_value_hist_midway', show=show)

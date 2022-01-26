@@ -1,0 +1,34 @@
+model_name: Siren
+N_spat: 128
+N_ic: 128
+N_temp: 8
+N_bound: 128
+MAX_EPOCH: 10000
+batch_size: 4096
+C:
+  {fidelity: 1,
+    ic: 1,
+    bc: 1}
+P:
+  {fidelity: 2,
+    ic: 1,
+    bc: 1,}
+sched_dict:
+  {type: step,
+    step: 500,
+    gamma: 0.8}
+optimizer_config:
+  {type: Adam,
+    lr: 0.000001,
+    weight_decay: 0}
+cam_man: True
+checkpoint: True
+checkpoint_path: '' # TODO: CHANGE TO MAIN FUNCTION ARGUMENT
+num_layer: 5
+hidden_features: 200
+sample_method: 'uniform'
+t_max: 0.001
+x_max: 1
+y_max: 1
+x_min: -1
+y_min: -1

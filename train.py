@@ -380,18 +380,20 @@ def train_with_ic_grad(model, int_loader, bc_loader, ic_loader, hist_dict, confi
 
 class scheduler_wrapper:
     def __init__(self, config, optimizer):
-        schedule_dict = config['sched_dict']
-        self.type = schedule_dict['type']
-        if self.type == 'step':
-            self.scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer,
-                                                       step_size=schedule_dict['step'],
-                                                       gamma=schedule_dict['gamma'])
-        if self.type == 'reduce_on_plat':
-            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                                  factor=schedule_dict['gamma'],
-                                                                  patience=schedule_dict['patience'],
-                                                                  threshold=schedule_dict['threshold'],
-                                                                  verbose=True)
+        self.type = ''
+        if config['sched_dict'] is not None:
+            schedule_dict = config['sched_dict']
+            self.type = schedule_dict['type']
+            if self.type == 'step':
+                self.scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer,
+                                                           step_size=schedule_dict['step'],
+                                                           gamma=schedule_dict['gamma'])
+            if self.type == 'reduce_on_plat':
+                self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                                      factor=schedule_dict['gamma'],
+                                                                      patience=schedule_dict['patience'],
+                                                                      threshold=schedule_dict['threshold'],
+                                                                      verbose=True)
 
     def step(self, metric):
         if self.type == 'step':
