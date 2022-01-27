@@ -61,8 +61,6 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
 
     model.to("cpu")
     model.eval()
-    for key, value in hist_dict.items():    #TODO: FIX FOR SOMETHING NORMAL
-        value = value.cpu()
     return hist_dict
 
 
