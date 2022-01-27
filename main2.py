@@ -48,13 +48,12 @@ if __name__ == '__main__':
     torchinfo.summary(model, (1, 3), verbose=1)
 
     print('\nBegin training...')
-    # if args.load:
-    #     f = open(args.source + '/hist', 'rb')
-    #     hist = pickle.load(f)
-    #     f.close()
-    # else:
-    #     hist = utils.init_hist_dict()
-    hist = utils.init_hist_dict()
+    if args.load:
+        f = open(args.source + '/hist', 'rb')
+        hist = pickle.load(f)
+        f.close()
+    else:
+        hist = utils.init_hist_dict()
 
     hist = train.call_method(model=model, int_loader=dloader_int, bc_loader=dloader_bc, ic_loader=dloader_ic, hist_dict=hist,
                       config_dict=config_dict, grad_dist=True, save=args.save, path=exp_dir, load=args.load)

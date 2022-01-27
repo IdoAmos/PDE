@@ -49,9 +49,8 @@ def default_parameter_generator():
 
     def_params = dict(N_spat=128, N_temp=8, N_bound=128, N_ic=128, cam_man=True,
                       MAX_EPOCH=6000, batch_size=2048, sched_dict=sched_dict, C=C, P=P,
-                      checkpoint=True, checkpoint_path='',
-                      model_name='Siren', num_layers=1, hidden_features=256, optimizer_config=optimizer_config,
-                      t_max=0.001, x_max=1, x_min=-1, y_max=1, y_min=-1, sample_method='uniform')
+                      checkpoint=True, model_name='Siren', num_layers=1, hidden_features=256,
+                      optimizer_config=optimizer_config, t_max=0.001, x_max=1, x_min=-1, y_max=1, y_min=-1, sample_method='uniform')
     return def_params
 
 
