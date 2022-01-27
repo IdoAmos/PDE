@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument("--save", action='store_true')
     parser.add_argument("--config", dest='config', required=True, help='path to config_BASELINE.yml file')
     parser.add_argument("--exp_name", dest='exp_name', required=False, default='experiment', type=str)
-    parser.add_argument("--load", action='store_true') # TODO: discard load variable
+    parser.add_argument("--load", action='store_true')
     parser.add_argument("--dest", dest='dest', default='', required=False, type=str)
     parser.add_argument("--source", dest='source', default='', required=False, type=str)
     parser.add_argument("--show", action='store_true')
@@ -48,12 +48,15 @@ if __name__ == '__main__':
     torchinfo.summary(model, (1, 3), verbose=1)
 
     print('\nBegin training...')
+    # if args.load:
+    #     f = open(args.source + '/hist', 'rb')
+    #     hist = pickle.load(f)
+    #     f.close()
+    # else:
+    #     hist = utils.init_hist_dict()
     if args.load:
-        f = open(args.source + '/hist', 'rb')
-        hist = pickle.load(f)
-        f.close()
-    else:
-        hist = utils.init_hist_dict()
+        config_dict['checkpoint_path'] = args.source
+    hist = utils.init_hist_dict()
 
     hist = train.call_method(model=model, int_loader=dloader_int, bc_loader=dloader_bc, ic_loader=dloader_ic, hist_dict=hist,
                       config_dict=config_dict, grad_dist=True, save=args.save, path=exp_dir, load=args.load)

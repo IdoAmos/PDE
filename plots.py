@@ -174,9 +174,9 @@ def evaluate(config_dict, exp_dir, model, save, show):
 
 
 def history_plots(config_dict, exp_dir, hist, save, show):
-    history_plot(hist, start=20, save=save, path=exp_dir, figname='mean_value_hist', show=show)
+    history_plot(hist, start=0, save=save, path=exp_dir, figname='mean_value_hist', show=show)
     history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, save=save, path=exp_dir,
                        figname='mean_value_hist_midway', show=show)
-    history_plot(hist, max=True, save=save, path=exp_dir, figname='max_value_hist', show=show)
+    history_plot(hist, start=0, max=True, save=save, path=exp_dir, figname='max_value_hist', show=show)
     history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, max=True, save=save, path=exp_dir,
                        figname='max_value_hist_midway', show=show)

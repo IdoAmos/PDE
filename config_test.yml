@@ -20,7 +20,6 @@ optimizer_config:
     weight_decay: 0}
 cam_man: True
 checkpoint: True
-checkpoint_path: '' # TODO: CHANGE TO MAIN FUNCTION ARGUMENT
 num_layer: 1
 hidden_features: 200
 sample_method: 'uniform'
