@@ -12,7 +12,7 @@ import utils
 from plots import display_hyper_parameters
 
 
-def main(save=True, load=False, dest='.', source='', config_dict=None):
+def main(save=True, load=False, dest='.', source='', config_dict=None, show=False):
     def_params = utils.default_parameter_generator()
     if config_dict is not None:
         for key in def_params.keys():
@@ -29,12 +29,6 @@ def main(save=True, load=False, dest='.', source='', config_dict=None):
     dloader_int, dloader_bc, dloader_ic, f0 = Data.generate_train_data(config_dict)
 
     # show the initial condition image
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.imshow(f0, cmap='gray')
-    ax.set_title('Anchor Image')
-    plt.axis('off')
-
     print('\nInitializing a {} model'.format(config_dict['model_name']))
     model = utils.assign_model(config_dict)
 
@@ -53,20 +47,23 @@ def main(save=True, load=False, dest='.', source='', config_dict=None):
     train.call_method(model=model, int_loader=dloader_int, bc_loader=dloader_bc, ic_loader=dloader_ic, hist_dict=hist,
                       config_dict=config_dict, grad_dist=True, save=save, path=exp_dir, load=load)
 
-    history_plots(config_dict, exp_dir, hist, save)
+    history_plots(config_dict, exp_dir, hist, save, show)
     if save:
         utils.save_exp(exp_dir, hist, model)
         plots.grad_dist_plot(model, epoch=config_dict['MAX_EPOCH'], save=True, path=exp_dir)
 
     model.to('cpu')
-    evaluate(config_dict, exp_dir, model, save)
-    plt.show()
+    evaluate(config_dict, exp_dir, model, save, show)
+    if show:
+        plt.show()
+    else:
+        plt.close('all')
     print('Finished!')
 
     return model, hist
 
 
-def evaluate(config_dict, exp_dir, model, save):
+def evaluate(config_dict, exp_dir, model, save, show):
     func.eval_res(model=model,
                   t_max=config_dict['t_max'],
                   x_min=config_dict['x_min'],
@@ -100,32 +97,18 @@ def evaluate(config_dict, exp_dir, model, save):
                   mode='diff',
                   save=save,
                   path=exp_dir)
-    func.eval_metric(model=model,
-                     metric='ssim',
-                     t_max=config_dict['t_max'],
-                     x_min=config_dict['x_min'],
-                     x_max=config_dict['x_max'],
-                     y_min=config_dict['y_min'],
-                     y_max=config_dict['y_max'],
-                     N=config_dict['N_ic'],
-                     save=save,
-                     path=exp_dir)
-    func.eval_metric(model=model,
-                     metric='psnr',
-                     t_max=config_dict['t_max'],
-                     x_min=config_dict['x_min'],
-                     x_max=config_dict['x_max'],
-                     y_min=config_dict['y_min'],
-                     y_max=config_dict['y_max'],
-                     N=config_dict['N_ic'],
-                     save=save,
-                     path=exp_dir)
+    func.eval_metric(model=model, t_max=config_dict['t_max'], metric='ssim', x_min=config_dict['x_min'],
+                     x_max=config_dict['x_max'], y_min=config_dict['y_min'], y_max=config_dict['y_max'],
+                     N=config_dict['N_ic'], path=exp_dir, save=save, show=show)
+    func.eval_metric(model=model, t_max=config_dict['t_max'], metric='psnr', x_min=config_dict['x_min'],
+                     x_max=config_dict['x_max'], y_min=config_dict['y_min'], y_max=config_dict['y_max'],
+                     N=config_dict['N_ic'], path=exp_dir, save=save, show=show)
 
 
-def history_plots(config_dict, exp_dir, hist, save):
-    plots.history_plot(hist, start=20, save=save, path=exp_dir, figname='mean_value_hist')
+def history_plots(config_dict, exp_dir, hist, save, show):
+    plots.history_plot(hist, start=20, save=save, path=exp_dir, figname='mean_value_hist', show=show)
     plots.history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, save=save, path=exp_dir,
-                       figname='mean_value_hist_midway')
-    plots.history_plot(hist, max=True, save=save, path=exp_dir, figname='max_value_hist')
+                       figname='mean_value_hist_midway', show=show)
+    plots.history_plot(hist, max=True, save=save, path=exp_dir, figname='max_value_hist', show=show)
     plots.history_plot(hist, start=config_dict['MAX_EPOCH'] // 2, max=True, save=save, path=exp_dir,
-                       figname='max_value_hist_midway')
+                       figname='max_value_hist_midway', show=show)

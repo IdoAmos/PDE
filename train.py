@@ -15,11 +15,12 @@ from fast_tensor_data_loader import FastTensorDataLoader as fLoader
 def call_method(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
                 show=True, grad_dist=False, save=True, path='', load=False):
     if config_dict['model_name'] == 'Siren':
-        train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
-              show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+        hist_dict = train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
+                          show=show, grad_dist=grad_dist, save=save, path=path, load=load)
     if config_dict['model_name'] == 'ResOpHidden':
         train_res_op(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
                      show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+    return hist_dict
 
 
 def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
@@ -60,6 +61,7 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
 
     model.to("cpu")
     model.eval()
+    return hist_dict
 
 
 def pre_training_setup(config_dict, hist_dict, load, model, path, save):
@@ -100,7 +102,7 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
         if epoch % 5 == 0:
             if epoch % 500 == 0:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
-                             show=show)
+                             show=False)
             else:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
                              show=False)
@@ -128,37 +130,7 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
 def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer):
     for batch in zip(int_loader, ic_loader, bc_loader):
         # extract data from batches, move to device
-        with torch.no_grad():
-            int_batch, ic_batch, bc_batch = batch
-
-            X_int = int_batch[0].to(device) if config_dict['C']['fidelity'] != 0 else None
-            X_ic = ic_batch[0].to(device) if config_dict['C']['ic'] != 0 else None
-            y_ic = ic_batch[1].to(device) if config_dict['C']['ic'] != 0 else None
-            X_top = bc_batch[0].to(device) if config_dict['C']['bc'] != 0 else None
-            X_bottom = bc_batch[1].to(device) if config_dict['C']['bc'] != 0 else None
-            X_left = bc_batch[2].to(device) if config_dict['C']['bc'] != 0 else None
-            X_right = bc_batch[3].to(device) if config_dict['C']['bc'] != 0 else None
-
-        if config_dict['C']['fidelity'] != 0:
-            fidelity = fidelity_term(X_int, hist_dict, model, config_dict['P'], config_dict['C'])
-        else:
-            fidelity = torch.Tensor([0]).to(device)[0]
-
-        # initial condition term
-        if config_dict['C']['ic'] != 0:
-            ic = initial_cond(X_ic, hist_dict, model, config_dict['P'], y_ic, config_dict['C'])
-        else:
-            ic = torch.Tensor([0]).to(device)[0]
-
-        # initial condition term
-        if config_dict['C']['bc'] != 0:
-            bc = boundary_cond(X_bottom, X_left, X_right, X_top, hist_dict, model, config_dict['P'],
-                               config_dict['C'])
-        else:
-            bc = torch.Tensor([0]).to(device)[0]
-
-        # calc loss and backward
-        loss = fidelity + ic + bc
+        loss = eval_loss(batch, config_dict, device, hist_dict, model)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -166,6 +138,44 @@ def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader
         # record values to history
         with torch.no_grad():
             hist_dict['train_loss'][-1] += loss.item()
+
+
+def eval_loss(batch, config_dict, device, hist_dict, model):
+    with torch.no_grad():
+        int_batch, ic_batch, bc_batch = batch
+
+        X_int = int_batch[0].to(device) if config_dict['C']['fidelity'] != 0 else None
+        X_ic = ic_batch[0].to(device) if config_dict['C']['ic'] != 0 else None
+        y_ic = ic_batch[1].to(device) if config_dict['C']['ic'] != 0 else None
+        X_top = bc_batch[0].to(device) if config_dict['C']['bc'] != 0 else None
+        X_bottom = bc_batch[1].to(device) if config_dict['C']['bc'] != 0 else None
+        X_left = bc_batch[2].to(device) if config_dict['C']['bc'] != 0 else None
+        X_right = bc_batch[3].to(device) if config_dict['C']['bc'] != 0 else None
+    # fidelity term
+    if config_dict['C']['fidelity'] != 0:
+        fidelity = fidelity_term(X_int, hist_dict, model, config_dict['P'], config_dict['C'])
+    else:
+        fidelity = torch.Tensor([0]).to(device)[0]
+    # initial condition term
+    if config_dict['C']['ic'] != 0:
+        ic = initial_cond(X_ic, hist_dict, model, config_dict['P'], y_ic, config_dict['C'])
+    else:
+        ic = torch.Tensor([0]).to(device)[0]
+    if config_dict['optimizer_config']['type'] == 'lbfgs': # pass l2 penalty explicitly
+        weight_decay = 0
+        for w in model.parameters():
+            weight_decay += w.norm() ** 2
+    else:
+        weight_decay = torch.Tensor([0]).to(device)[0]
+    # initial condition term
+    if config_dict['C']['bc'] != 0:
+        bc = boundary_cond(X_bottom, X_left, X_right, X_top, hist_dict, model, config_dict['P'],
+                           config_dict['C'])
+    else:
+        bc = torch.Tensor([0]).to(device)[0]
+    # calc loss and backward
+    loss = fidelity + ic + bc + weight_decay
+    return loss
 
 
 def boundary_cond(X_bottom, X_left, X_right, X_top, hist_dict, model, P, C):
@@ -380,18 +390,20 @@ def train_with_ic_grad(model, int_loader, bc_loader, ic_loader, hist_dict, confi
 
 class scheduler_wrapper:
     def __init__(self, config, optimizer):
-        schedule_dict = config['sched_dict']
-        self.type = schedule_dict['type']
-        if self.type == 'step':
-            self.scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer,
-                                                       step_size=schedule_dict['step'],
-                                                       gamma=schedule_dict['gamma'])
-        if self.type == 'reduce_on_plat':
-            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                                  factor=schedule_dict['gamma'],
-                                                                  patience=schedule_dict['patience'],
-                                                                  threshold=schedule_dict['threshold'],
-                                                                  verbose=True)
+        self.type = ''
+        if config['sched_dict'] is not None:
+            schedule_dict = config['sched_dict']
+            self.type = schedule_dict['type']
+            if self.type == 'step':
+                self.scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer,
+                                                           step_size=schedule_dict['step'],
+                                                           gamma=schedule_dict['gamma'])
+            if self.type == 'reduce_on_plat':
+                self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                                      factor=schedule_dict['gamma'],
+                                                                      patience=schedule_dict['patience'],
+                                                                      threshold=schedule_dict['threshold'],
+                                                                      verbose=True)
 
     def step(self, metric):
         if self.type == 'step':
@@ -401,14 +413,17 @@ class scheduler_wrapper:
 
 
 def init_optimizer(config, model):
-    optim_config = config['optimizer']
+    optim_config = config['optimizer_config']
     type = optim_config['type']
     lr = optim_config['lr']
     l2_pen = optim_config['weight_decay']
     if type == 'Adam':
-        beta1 = optim_config['beta1']
-        beta2 = optim_config['beta2']
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=l2_pen)
+        if 'beta1' in optim_config.keys():
+            beta1 = optim_config['beta1']
+            beta2 = optim_config['beta2']
+            optimizer = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=l2_pen)
+        else:
+            optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=l2_pen)
 
     if type == 'lbfgs':
         optimizer = optim.LBFGS(params=model.parameters(), lr=lr)

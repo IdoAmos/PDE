@@ -49,9 +49,8 @@ def default_parameter_generator():
 
     def_params = dict(N_spat=128, N_temp=8, N_bound=128, N_ic=128, cam_man=True,
                       MAX_EPOCH=6000, batch_size=2048, sched_dict=sched_dict, C=C, P=P,
-                      checkpoint=True, checkpoint_path='',
-                      model_name='Siren', num_layers=1, hidden_features=256,
-                      t_max=0.001, x_max=1, x_min=-1, y_max=1, y_min=-1, sample_method='uniform')
+                      checkpoint=True, model_name='Siren', num_layers=1, hidden_features=256,
+                      optimizer_config=optimizer_config, t_max=0.001, x_max=1, x_min=-1, y_max=1, y_min=-1, sample_method='uniform')
     return def_params
 
 
@@ -62,7 +61,7 @@ def make_exp_dir(path, exp_params):
     exp_dir = path + '/config' + str(exp_num)
     while os.path.exists(exp_dir):
         exp_num += 1
-        exp_dir = path + '/config' + str(exp_num)
+        exp_dir = path + '/config{}'.format(exp_num)
     os.mkdir(exp_dir)
     os.mkdir(exp_dir + '/checkpoints') if exp_params['checkpoint'] else ''
 
