@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', required=True, help='path to config_BASELINE.yml file')
     parser.add_argument("--exp_name", dest='exp_name', required=False, default='experiment', type=str)
     parser.add_argument("--load", action='store_true')
-    parser.add_argument("--dest", dest='dest', default='', required=False, type=str)
+    parser.add_argument("--dest", dest='dest', default='', required=False, type=str, help='path to checkpoint.pt')
     parser.add_argument("--source", dest='source', default='', required=False, type=str)
     parser.add_argument("--show", action='store_true')
     args = parser.parse_args()

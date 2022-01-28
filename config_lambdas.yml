@@ -6,7 +6,7 @@ N_bound: 128
 MAX_EPOCH: 10000
 batch_size: 4096
 C:
-  {fidelity: 1,
+  {fidelity: 0.1,
     ic: 1,
     bc: 1}
 P:

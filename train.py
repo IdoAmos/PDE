@@ -114,17 +114,14 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
             save_checkpoint(model, path + '/checkpoints/model.pt', epoch, optimizer, hist_dict)
         if epoch == 5:
             save_checkpoint(model, path + '/checkpoints/initial_model.pt', epoch, optimizer, hist_dict)
-            grad_dist_plot(model, epoch=epoch, save=save,
-                           path=path + 'gradient dist/gradient_dist_init', show=False) if grad_dist else None
+            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False, img_name='grad_dist_init') if grad_dist else None
         if epoch == config_dict['MAX_EPOCH'] // 2:
             save_checkpoint(model, path + '/checkpoints/mid_model.pt', epoch, optimizer, hist_dict)
-            grad_dist_plot(model, epoch=epoch, save=save,
-                           path=path + '/gradient dist/gradient_dist_mid', show=False) if grad_dist else None
+            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False, img_name='grad_dist_mid') if grad_dist else None
         if epoch == config_dict['MAX_EPOCH'] - 1:
-            save_checkpoint(model, path + 'gradient dist/checkpoints/trained_model.pt', config_dict['MAX_EPOCH'], optimizer,
-                            hist_dict)
-            grad_dist_plot(model, epoch=epoch, save=save,
-                           path=path + 'gradient dist/gradient_dist_final', show=False) if grad_dist else None
+            save_checkpoint(model, path + '/checkpoints/trained_model.pt', config_dict['MAX_EPOCH'], optimizer, hist_dict)
+            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist',
+                           show=False, img_name='grad_dist_final') if grad_dist else None
 
 
 def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer):

@@ -79,7 +79,7 @@ def history_plot(hist, start=20, end=None, max=False, save=False, path='.', fign
     plt.close('all')
 
 
-def grad_dist_plot(model, epoch, save=False, path='', show=False):
+def grad_dist_plot(model, epoch, save=False, path='', show=False, img_name='grad_dist'):
     num_layers = 0
     for name, param in model.named_parameters():
         if param.dim() > 1 and param.requires_grad:  # only for none bias weights with gradients
@@ -107,7 +107,7 @@ def grad_dist_plot(model, epoch, save=False, path='', show=False):
 
     fig.suptitle('gradient distribution at epoch {}'.format(epoch), y=1.05)
     fig.tight_layout(h_pad=1)
-    fig.savefig(fname=path + '/grad dist') if save else None
+    fig.savefig(fname=path + '/' + img_name) if save else None
     plt.show() if show else plt.close(fig)
 
 
