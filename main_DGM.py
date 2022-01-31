@@ -65,7 +65,6 @@ if __name__ == '__main__':
 
     if args.save:
         utils.save_exp(exp_dir, hist, model)
-        plots.grad_dist_plot(model, epoch=config_dict['MAX_EPOCH'], save=True, path=exp_dir)
 
     model.to('cpu')
     plots.evaluate(config_dict, exp_dir, model, args.save, args.show)

@@ -457,3 +457,23 @@ def generate_train_data(config_dict):
                                                       config_dict["batch_size"])
 
     return dloader_int, dloader_bc, dloader_ic, f0
+
+
+# def DGM_sample(config_dict: dict):
+
+
+def range_sampler(x_min, x_max, y_min, y_max, t_max, size, t_min=0, eps=1e-6):
+    sample = -1 * (np.random.rand(size, 3) - 1)  # random sample from (0, 1]
+    if x_min == x_max:
+        sample[..., 0] = x_max
+    if y_min == y_max:
+        sample[..., 1] = y_max
+    if t_min == t_max:
+        sample[..., 1] = t_max
+
+    # transform sample to open domain
+    sample[..., 0] = (x_max - x_min - eps) * sample[..., 0] + x_min
+    sample[..., 1] = (y_max - y_min - eps) * sample[..., 1] + y_min
+    sample[..., 2] = (t_max - t_min - eps) * sample[..., 2] + t_min
+
+    return sample

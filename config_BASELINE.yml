@@ -1,4 +1,5 @@
 model_name: Siren
+train_scheme: ''
 N_spat: 128
 N_ic: 128
 N_temp: 8
@@ -13,7 +14,7 @@ P:
   {fidelity: 2,
     ic: 1,
     bc: 1,}
-sched_dict: null
+sched_dict: {type: 'step', step: 500, gamma: 0.8}
 optimizer_config:
   {type: Adam,
     lr: 0.000001,
