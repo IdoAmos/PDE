@@ -14,15 +14,12 @@ from fast_tensor_data_loader import FastTensorDataLoader as fLoader
 
 def call_method(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
                 show=True, grad_dist=False, save=True, path='', load=False):
-    if config_dict['train_scheme'] == 'DGM':
-        ''
-    else:
-        if config_dict['model_name'] == 'Siren':
-            hist_dict = train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
-                              show=show, grad_dist=grad_dist, save=save, path=path, load=load)
-        if config_dict['model_name'] == 'ResOpHidden':
-            train_res_op(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
-                         show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+    if config_dict['model_name'] == 'Siren':
+        hist_dict = train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
+                          show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+    if config_dict['model_name'] == 'ResOpHidden':
+        train_res_op(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
+                     show=show, grad_dist=grad_dist, save=save, path=path, load=load)
     return hist_dict
 
 
@@ -54,7 +51,13 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
     for epoch in trange(start_epoch, config_dict['MAX_EPOCH']):
         for key, item in hist_dict.items():
             item.append(0)
-
+        if config_dict['train_scheme'] == 'DGM':
+            int_loader, bc_loader, ic_loader = Data.DGM_sample(batch_size=config_dict['batch_size'],
+                                                               x_min=config_dict['x_min'],
+                                                               x_max=config_dict['x_max'],
+                                                               y_min=config_dict['y_min'],
+                                                               y_max=config_dict['y_max'],
+                                                               t_max=config_dict['t_max'])
         train_epoch(bc_loader=bc_loader, config_dict=config_dict, device=device, hist_dict=hist_dict,
                     ic_loader=ic_loader, int_loader=int_loader, model=model, optimizer=optimizer)
 
@@ -128,9 +131,6 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
 
 
 def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer):
-    if config_dict['train_scheme'] =='DGM':
-        int_loader, ic_loader, bc_loader == Data.DGM_sample(config_dict)
-
     for batch in zip(int_loader, ic_loader, bc_loader):
         # extract data from batches, move to device
         loss = eval_loss(batch, config_dict, device, hist_dict, model)

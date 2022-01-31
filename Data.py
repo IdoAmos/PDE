@@ -29,13 +29,14 @@ def img_sampler(f0, coords, x_min=-1, x_max=1, y_min=-1, y_max=1):
     Sample image f0 according to general coordinates in R2.
     Sampling is done by transforming coords domain to image range [0,num_rows)x[0,num_cols) and NN sampling
     :param f0: image to sample from
-    :param data: coordinates of sampls
+    :param data: coordinates of sample
     :return: resampled version of f0
     """
     # coords should be 2D
     data = coords.copy()
     if data.shape[-1] > 2:
         data = data[..., :2]
+    # ---------------------------------------------------
 
     # scale coords to the dimension of f0
     num_cols = f0.shape[1] - 1
@@ -53,7 +54,11 @@ def img_sampler(f0, coords, x_min=-1, x_max=1, y_min=-1, y_max=1):
 
     data = data[..., [1, 0]]  # change to image orientation (y,x)
     sample_points = data.reshape(-1, 2)
-    f0_sampled = f0[sample_points[:, 0], sample_points[:, 1]].reshape(data.shape[:2])  # sample f0 in coordinates
+    if len(coords.shape) == 2:
+        f0_sampled = f0[sample_points[:, 0], sample_points[:, 1]].reshape(len(coords), -1)  # sample f0 in coordinates
+    else:
+        f0_sampled = f0[sample_points[:, 0], sample_points[:, 1]].reshape(data.shape[:2])  # sample f0 in coordinates
+
     return f0_sampled
 
 
@@ -459,7 +464,32 @@ def generate_train_data(config_dict):
     return dloader_int, dloader_bc, dloader_ic, f0
 
 
-# def DGM_sample(config_dict: dict):
+def DGM_sample(batch_size, x_min, x_max, y_min, y_max, t_max, img_name='cam_man'):
+    """
+    Sample the interior and boundary
+    :param config_dict: confguration of expriments
+    :return:
+    """
+    # interior sample
+    X_int = torch.from_numpy(range_sampler(x_min, x_max, y_min, y_max, t_max, size=batch_size, eps=1e-6))
+
+    # intial condition sampler
+    X_ic = range_sampler(x_min, x_max, y_min, y_max, t_max=0, size=batch_size, eps=1e-6)
+    if img_name == 'cam_man':
+        f0 = init_f0()
+        y_ic = img_sampler(f0=f0, coords=X_ic, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max)
+    X_ic = torch.from_numpy(X_ic)
+    y_ic = torch.from_numpy(y_ic)
+
+    # boundary condition sampler
+    top = torch.from_numpy(range_sampler(x_min, x_max, y_max, y_max, t_max=0, size=batch_size//4, eps=0))
+    bottom = torch.from_numpy(range_sampler(x_min, x_max, y_min, y_min, t_max=0, size=batch_size//4, eps=0))
+    left = torch.from_numpy(range_sampler(x_min, x_min, y_min, y_max, t_max=0, size=batch_size//4, eps=0))
+    right = torch.from_numpy(range_sampler(x_max, x_max, y_min, y_max, t_max=0, size=batch_size // 4, eps=0))
+    X_bound = torch.stack([top, bottom, left, right], dim=0)
+
+    int_dloader, bc_dloader, ic_dloader = dataloaders(X_int, X_bound, X_ic, y_ic, batch_size)
+    return int_dloader, bc_dloader, ic_dloader
 
 
 def range_sampler(x_min, x_max, y_min, y_max, t_max, size, t_min=0, eps=1e-6):
@@ -469,11 +499,11 @@ def range_sampler(x_min, x_max, y_min, y_max, t_max, size, t_min=0, eps=1e-6):
     if y_min == y_max:
         sample[..., 1] = y_max
     if t_min == t_max:
-        sample[..., 1] = t_max
+        sample[..., 2] = t_max
 
     # transform sample to open domain
     sample[..., 0] = (x_max - x_min - eps) * sample[..., 0] + x_min
     sample[..., 1] = (y_max - y_min - eps) * sample[..., 1] + y_min
     sample[..., 2] = (t_max - t_min - eps) * sample[..., 2] + t_min
 
-    return sample
+    return sample.astype(np.float32)
