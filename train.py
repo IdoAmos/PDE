@@ -15,12 +15,12 @@ from fast_tensor_data_loader import FastTensorDataLoader as fLoader
 
 def call_method(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
                 show=True, grad_dist=False, save=True, path='', load=False):
-    if config_dict['model_name'] == 'Siren':
-        hist_dict = train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
-                          show=show, grad_dist=grad_dist, save=save, path=path, load=load)
-    if config_dict['model_name'] == 'ResOpHidden':
-        train_res_op(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
-                     show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+    # if config_dict['model_name'] == 'Siren':
+    hist_dict = train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
+                      show=show, grad_dist=grad_dist, save=save, path=path, load=load)
+    # if config_dict['model_name'] == 'ResOpHidden':
+    #     train_res_op(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict,
+    #                  show=show, grad_dist=grad_dist, save=save, path=path, load=load)
     return hist_dict
 
 

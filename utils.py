@@ -105,4 +105,12 @@ def assign_model(config_dict) -> torch.nn.Module:
                                    hidden_features=config_dict['hidden_features'],
                                    ic_layers=config_dict['ic_layers'],
                                    op_layers=config_dict['op_layers'])
+
+    if name =='ConvSiren':
+        model = Models.ConvSiren(in_features=3,
+                                 num_ch=config_dict['num_ch'],
+                                 out_features=1,
+                                 nhood=config_dict['nhood'],
+                                 hidden_layers=len(config_dict['num_ch'])-1,
+                                 outermost_linear=True)
     return model
