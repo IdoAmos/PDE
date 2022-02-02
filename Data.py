@@ -333,12 +333,13 @@ def make_datasets(t_max, N_spat, N_temp, N_ic, N_bound, f0,
 
 
 def dataloaders(interior_data, boundary_data, init_cond_data, init_cond_labels,
-                int_batch_size, shuff=True):
+                int_batch_size, shuff=True, show=True):
     '''
     generates the 3 dataloaders for the interior points. we need to match
     the number of batches for each dataset.
     Returns:
     int_dloader,bc_dloader ,ic_dloader
+    :param show:
     '''
     int_dloader = FastTensorDataLoader(interior_data, \
                                        batch_size=int_batch_size, shuffle=shuff)
@@ -363,9 +364,10 @@ def dataloaders(interior_data, boundary_data, init_cond_data, init_cond_labels,
     if len(int_dloader) != len(bc_dloader) or len(int_dloader) != len(ic_dloader):
         raise ValueError('Size mismatch in number of batches!')
 
-    print('batch sizes: (interior, boundary, initial condition):')
-    print(int_batch_size, bc_batch_size, ic_batch_size)
-    print('number of batchs:', len(int_dloader))
+    if show:
+        print('batch sizes: (interior, boundary, initial condition):')
+        print(int_batch_size, bc_batch_size, ic_batch_size)
+        print('number of batchs:', len(int_dloader))
 
     return int_dloader, bc_dloader, ic_dloader
 
@@ -455,11 +457,7 @@ def generate_train_data(config_dict):
                                                           N_bound=config_dict['N_bound'],
                                                           f0=f0,
                                                           t_sample_method=config_dict['sample_method'])
-    dloader_int, dloader_bc, dloader_ic = dataloaders(interior,
-                                                      boundary,
-                                                      init_cond,
-                                                      labels,
-                                                      config_dict["batch_size"])
+    dloader_int, dloader_bc, dloader_ic = dataloaders(interior, boundary, init_cond, labels, config_dict["batch_size"])
 
     return dloader_int, dloader_bc, dloader_ic, f0
 
@@ -488,7 +486,7 @@ def DGM_sample(batch_size, x_min, x_max, y_min, y_max, t_max, img_name='cam_man'
     right = torch.from_numpy(range_sampler(x_max, x_max, y_min, y_max, t_max=0, size=batch_size // 4, eps=0))
     X_bound = torch.stack([top, bottom, left, right], dim=0)
 
-    int_dloader, bc_dloader, ic_dloader = dataloaders(X_int, X_bound, X_ic, y_ic, batch_size)
+    int_dloader, bc_dloader, ic_dloader = dataloaders(X_int, X_bound, X_ic, y_ic, batch_size, show=False)
     return int_dloader, bc_dloader, ic_dloader
 
 

@@ -1,4 +1,4 @@
-model_name: Siren
+model_name: ConvSiren
 train_scheme: ''
 N_spat: 128
 N_ic: 128

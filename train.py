@@ -6,6 +6,7 @@ import os
 import Data
 import plots
 import utils
+import Models
 from func import gradient, spatial_laplacian
 from plots import show_to_user, grad_dist_plot
 from utils import save_checkpoint
@@ -46,6 +47,14 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
                                                                               model=model,
                                                                               path=path,
                                                                               save=save)
+    if config_dict['train_scheme'] == 'ic_grad':
+        neural_img = Models.Siren(in_features=2, hidden_features=512, hidden_layers=2,
+                                  out_features=1, outermost_linear=True)
+        neural_img.to(device)
+        state_dict_path = os.getcwd() + '/neural_camman'  # TODO: CHANGE TO SOMETHING MORE GENERAL
+        neural_img.load_state_dict(torch.load(state_dict_path, map_location=device))
+    else:
+        neural_img = None
 
     model.train()
     for epoch in trange(start_epoch, config_dict['MAX_EPOCH']):
@@ -58,8 +67,9 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
                                                                y_min=config_dict['y_min'],
                                                                y_max=config_dict['y_max'],
                                                                t_max=config_dict['t_max'])
+
         train_epoch(bc_loader=bc_loader, config_dict=config_dict, device=device, hist_dict=hist_dict,
-                    ic_loader=ic_loader, int_loader=int_loader, model=model, optimizer=optimizer)
+                    ic_loader=ic_loader, int_loader=int_loader, model=model, optimizer=optimizer, neural_img=neural_img)
 
         post_epoch_ops(config_dict=config_dict, device=device, epoch=epoch, grad_dist=grad_dist,
                        hist_dict=hist_dict, int_loader=int_loader, model=model, optimizer=optimizer,
@@ -97,7 +107,7 @@ def pre_training_setup(config_dict, hist_dict, load, model, path, save):
 
 
 def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader, model, optimizer, path, save,
-                   scheduler, show):
+                   scheduler, show=False):
     with torch.no_grad():
         hist_dict['train_loss'][-1] /= len(int_loader)
         hist_dict['mean_fid'][-1] /= len(int_loader)
@@ -108,7 +118,7 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
         if epoch % 5 == 0:
             if epoch % 500 == 0:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
-                             show=False)
+                             show=show)
             else:
                 show_to_user(config_dict=config_dict, epoch=epoch, model=model, device=device, hist_dict=hist_dict,
                              show=False)
@@ -120,20 +130,23 @@ def post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader,
             save_checkpoint(model, path + '/checkpoints/model.pt', epoch, optimizer, hist_dict)
         if epoch == 5:
             save_checkpoint(model, path + '/checkpoints/initial_model.pt', epoch, optimizer, hist_dict)
-            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False, img_name='grad_dist_init') if grad_dist else None
+            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False,
+                           img_name='grad_dist_init') if grad_dist else None
         if epoch == config_dict['MAX_EPOCH'] // 2:
             save_checkpoint(model, path + '/checkpoints/mid_model.pt', epoch, optimizer, hist_dict)
-            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False, img_name='grad_dist_mid') if grad_dist else None
+            grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist', show=False,
+                           img_name='grad_dist_mid') if grad_dist else None
         if epoch == config_dict['MAX_EPOCH'] - 1:
-            save_checkpoint(model, path + '/checkpoints/trained_model.pt', config_dict['MAX_EPOCH'], optimizer, hist_dict)
+            save_checkpoint(model, path + '/checkpoints/trained_model.pt', config_dict['MAX_EPOCH'], optimizer,
+                            hist_dict)
             grad_dist_plot(model, epoch=epoch, save=save, path=path + '/gradient dist',
                            show=False, img_name='grad_dist_final') if grad_dist else None
 
 
-def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer):
+def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer, neural_img=None):
     for batch in zip(int_loader, ic_loader, bc_loader):
         # extract data from batches, move to device
-        loss = eval_loss(batch, config_dict, device, hist_dict, model)
+        loss = eval_loss(batch, config_dict, device, hist_dict, model, neural_img)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -143,7 +156,7 @@ def train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader
             hist_dict['train_loss'][-1] += loss.item()
 
 
-def eval_loss(batch, config_dict, device, hist_dict, model):
+def eval_loss(batch, config_dict, device, hist_dict, model, neural_img=None):
     with torch.no_grad():
         int_batch, ic_batch, bc_batch = batch
 
@@ -161,10 +174,10 @@ def eval_loss(batch, config_dict, device, hist_dict, model):
         fidelity = torch.Tensor([0]).to(device)[0]
     # initial condition term
     if config_dict['C']['ic'] != 0:
-        ic = initial_cond(X_ic, hist_dict, model, config_dict['P'], y_ic, config_dict['C'])
+        ic = initial_cond(X_ic, hist_dict, model, config_dict['P'], y_ic, config_dict['C'], neural_img)
     else:
         ic = torch.Tensor([0]).to(device)[0]
-    if config_dict['optimizer_config']['type'] == 'lbfgs': # pass l2 penalty explicitly
+    if config_dict['optimizer_config']['type'] == 'lbfgs':  # pass l2 penalty explicitly
         weight_decay = 0
         for w in model.parameters():
             weight_decay += w.norm() ** 2
@@ -207,7 +220,7 @@ def boundary_cond(X_bottom, X_left, X_right, X_top, hist_dict, model, P, C):
     return bc
 
 
-def initial_cond(X_ic, hist_dict, model, P, y_ic, C):
+def initial_cond(X, hist_dict, model, P, y, C, neural_img=None):
     """
     Get initial condition term for model and input
     Args:
@@ -221,14 +234,15 @@ def initial_cond(X_ic, hist_dict, model, P, y_ic, C):
 
     Returns:
         torch scalar tensor
+        :param y:
+        :param neural_img:
     """
-    if 'grad' in C.keys():
-        labels, coords_ic = y_ic(X_ic)
-    else:
-        labels = y_ic
+    if neural_img is not None:
+        y, neural_coords = neural_img(X[..., :-1])
+        gt_grad = gradient(y=y, x=neural_coords)
 
-    out, coords = model(X_ic)
-    ic = torch.abs(out - labels) ** P['ic']
+    out, coords = model(X)
+    ic = torch.abs(out - y) ** P['ic']
 
     # store max values
     if ic.max() > hist_dict['max_ic'][-1]:
@@ -240,13 +254,13 @@ def initial_cond(X_ic, hist_dict, model, P, y_ic, C):
     else:
         ic_inf = torch.Tensor([0]).to(ic.device)[0]
 
-    # get loss on gradient if using gradient of IC as well
-    if 'grad' in C.keys():
-        gt_grad = gradient(labels, coords_ic)
-        predicted_grad = gradient(coords, out)
-        ic_grad = C['ic_grad'] * torch.abs(gt_grad - predicted_grad)
-    else:
+    if not neural_img:
         ic_grad = torch.Tensor([0]).to(ic.device)[0]
+    # get loss on gradient if using gradient of IC as well
+    else:
+        predicted_grad = gradient(y=out, x=coords)[..., :-1]  # we want the spatial gradient of model to match GT
+        ic_grad = C['ic_grad'] * torch.norm(gt_grad - predicted_grad, p=P['ic_grad'],
+                                            dim=1)  # TODO: IS DIM 1 GOOD HERE?
 
     # compute mean for loss
     ic = torch.mean(ic)
@@ -382,7 +396,7 @@ def train_with_ic_grad(model, int_loader, bc_loader, ic_loader, hist_dict, confi
         for key, item in hist_dict.items():
             item.append(0)
 
-        train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer)
+        train_epoch(bc_loader, config_dict, device, hist_dict, ic_loader, int_loader, model, optimizer, neural_img)
 
         post_epoch_ops(config_dict, device, epoch, grad_dist, hist_dict, int_loader, model, optimizer, path, save,
                        scheduler, show)

@@ -17,7 +17,7 @@ P:
 sched_dict: {type: 'step', step: 500, gamma: 0.8}
 optimizer_config:
   {type: Adam,
-    lr: 0.000001,
+    lr: 0.00005,
     weight_decay: 0.000001}
 cam_man: True
 checkpoint: True
