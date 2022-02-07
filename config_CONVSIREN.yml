@@ -1,14 +1,10 @@
 model_name: ConvSiren
 train_scheme: ''
-#N_spat: 128
-#N_ic: 128
-#N_temp: 8
-#N_bound: 128
-N_spat: 16
-N_ic: 16
-N_temp: 4
-N_bound: 16
-MAX_EPOCH: 10
+N_spat: 128
+N_ic: 128
+N_temp: 8
+N_bound: 128
+MAX_EPOCH: 10000
 batch_size: 4096
 C:
   {fidelity: 0.01,
