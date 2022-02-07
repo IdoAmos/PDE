@@ -76,7 +76,7 @@ def history_plot(hist, start=20, end=None, max=False, save=False, path='.', fign
         fig.savefig(path + '/' + figname)
     if show:
         plt.draw()
-    plt.close('all')
+    # plt.close('all')
 
 
 def grad_dist_plot(model, epoch, save=False, path='', show=False, img_name='grad_dist'):

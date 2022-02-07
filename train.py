@@ -47,7 +47,7 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
                                                                               model=model,
                                                                               path=path,
                                                                               save=save)
-    if config_dict['train_scheme'] == 'ic_grad':
+    if 'ic_grad' in config_dict['train_scheme'] :
         neural_img = Models.Siren(in_features=2, hidden_features=512, hidden_layers=2,
                                   out_features=1, outermost_linear=True)
         neural_img.to(device)
@@ -60,7 +60,7 @@ def train(model, int_loader, bc_loader, ic_loader, hist_dict, config_dict
     for epoch in trange(start_epoch, config_dict['MAX_EPOCH']):
         for key, item in hist_dict.items():
             item.append(0)
-        if config_dict['train_scheme'] == 'DGM':
+        if 'DGM' in config_dict['train_scheme']:
             int_loader, bc_loader, ic_loader = Data.DGM_sample(batch_size=config_dict['batch_size'],
                                                                x_min=config_dict['x_min'],
                                                                x_max=config_dict['x_max'],

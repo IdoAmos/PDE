@@ -1,18 +1,20 @@
 model_name: Siren
-train_scheme: 'DGM'
+train_scheme: ['DGM', 'ic_grad']
 N_spat: 128
 N_ic: 128
 N_temp: 8
 N_bound: 128
-MAX_EPOCH: 10000
+MAX_EPOCH: 100
 batch_size: 256
 C:
   {fidelity: 0.01,
     ic: 1,
+    ic_grad: 0.1,
     bc: 1}
 P:
   {fidelity: 2,
     ic: 1,
+    ic_grad: 2,
     bc: 1,}
 sched_dict: {type: 'step', step: 500, gamma: 0.8}
 optimizer_config:
