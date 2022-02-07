@@ -1,0 +1,3 @@
+nohup python main.py --config config_BASELINE.yml --save --exp_name BASELINE --dest RESULTS
+nohup python main.py --config config_BASELINE_XL1.yml --save --exp_name BASELINE --dest RESULTS
+nohup python main.py --config config_BASELINE_XL2.yml --save --exp_name BASELINE --dest RESULTS
