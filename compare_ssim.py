@@ -8,7 +8,7 @@ import utils
 import matplotlib.pyplot as plt
 import torch
 
-path = '/Users/idoamos/Desktop/Projects/Nir - Project/exp_eff'
+path = '/Users/idoamos/Desktop/Projects/Nir-Project/RESULTS1/BASELINE'
 
 ssim_plots = []
 psnr_plots = []

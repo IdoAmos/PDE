@@ -4,19 +4,19 @@ N_spat: 128
 N_ic: 128
 N_temp: 8
 N_bound: 128
-MAX_EPOCH: 10000
+MAX_EPOCH: 20000
 batch_size: 4096
 C:
   {fidelity: 0.01,
-    ic: 0.5,
-    ic_grad: 0.5,
+    ic: 1,
+    ic_grad: 0.1,
     bc: 1}
 P:
   {fidelity: 2,
     ic: 1,
     ic_grad: 2,
     bc: 1,}
-sched_dict: {type: 'step', step: 500, gamma: 0.8}
+sched_dict: {type: 'step', step: 1000, gamma: 0.8}
 optimizer_config:
   {type: Adam,
     lr: 0.00005,
